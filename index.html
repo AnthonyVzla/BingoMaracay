@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Caribe Play</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .panel { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        .active { display: block; }
+        .grid-75 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-top: 10px; }
+        .num-box { padding: 10px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+        .tachado { background-color: #ff4d4d; color: white; text-decoration: line-through; }
+        .cilindro { display: flex; gap: 10px; margin-bottom: 20px; background: #333; padding: 10px; border-radius: 50px; color: white;}
+        .bola { width: 40px; height: 40px; background: #ffd700; border-radius: 50%; color: black; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        #codigo-soporte-trigger { position: fixed; bottom: 0; right: 0; width: 30px; height: 30px; opacity: 0; cursor: pointer; }
+        .admin-box { border: 2px solid #0056b3; padding: 15px; margin-top: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="codigo-soporte-trigger" onclick="pedirCodigoAdmin()"></div>
+
+    <div id="panel-auth" class="panel active">
+        <h2>Bienvenido a Bingo Caribe Play</h2>
+        
+        <div id="login-section">
+            <h3>Iniciar Sesión</h3>
+            <input type="email" id="log-email" placeholder="Correo">
+            <input type="password" id="log-pass" placeholder="Contraseña">
+            <button onclick="iniciarSesion()">Entrar</button>
+        </div>
+
+        <hr>
+
+        <div id="register-section">
+            <h3>Registro Obligatorio</h3>
+            <input type="text" id="reg-nombre" placeholder="Nombre">
+            <input type="text" id="reg-apellido" placeholder="Apellido">
+            <input type="number" id="reg-edad" placeholder="Edad">
+            <input type="text" id="reg-tel" placeholder="Teléfono">
+            <input type="text" id="reg-cedula" placeholder="Cédula">
+            <input type="text" id="reg-nac" placeholder="Nacionalidad">
+            
+            <h4>Datos para recibir premios (PagoMóvil)</h4>
+            <input type="text" id="reg-pm-cedula" placeholder="Cédula PagoMóvil">
+            <input type="text" id="reg-pm-tel" placeholder="Teléfono PagoMóvil">
+            <input type="text" id="reg-pm-banco" placeholder="Banco (Ej: Mercantil 0105)">
+            
+            <h4>Credenciales</h4>
+            <input type="email" id="reg-email" placeholder="Correo electrónico">
+            <input type="password" id="reg-pass" placeholder="Contraseña">
+            <button onclick="registrarUsuario()">Registrarse</button>
+        </div>
+    </div>
+
+    <div id="panel-dashboard" class="panel">
+        <h2>Sala de Bingo</h2>
+        <div id="premios-info" style="background: #e6f7ff; padding: 10px; border-radius: 5px;">
+            <h3>Premio Principal: <span id="premio-main">0</span> Bs</h3>
+            <h4 id="premio-prorroga-container" style="display:none;">Premio Prórroga: <span id="premio-prorroga">0</span> Bs</h4>
+        </div>
+
+        <div class="compra-cartones">
+            <h3>Adquirir Cartones</h3>
+            <p><strong>Datos de Pago (PagoMóvil):</strong> Cédula: 27.146.006 | Teléfono: 04128481584 | Banco Mercantil 0105</p>
+            <p>Valor por cartón: 150 Bs.</p>
+            <label>Cantidad (1-4):</label>
+            <select id="cantidad-cartones">
+                <option value="1">1 Cartón</option>
+                <option value="2">2 Cartones</option>
+                <option value="3">3 Cartones</option>
+                <option value="4">4 Cartones</option>
+            </select>
+            <button onclick="reportarPago()">Reportar Pago</button>
+            <p id="estado-compra"></p>
+        </div>
+
+        <div id="mis-cartones-container" style="display: none;">
+            <h3>Tus Cartones Aprobados</h3>
+            <div id="mis-cartones"></div>
+        </div>
+
+        <div id="cronometro-container">
+            <h3>El juego inicia en: <span id="cronometro">--:--</span></h3>
+        </div>
+        
+        <button id="btn-entrar-juego" style="display:none;" onclick="mostrarPanel('panel-juego')">Entrar al Juego</button>
+    </div>
+
+    <div id="panel-juego" class="panel">
+        <h2>Jugando Bingo</h2>
+        
+        <div class="cilindro" id="ultimas-bolas">
+            </div>
+
+        <div class="grid-75" id="tablero-75">
+            </div>
+
+        <button id="btn-bingo" onclick="cantarBingo()" style="background: #28a745; color: white; padding: 15px 30px; font-size: 20px; border-radius: 8px; margin-top: 20px; width: 100%;">¡BINGO!</button>
+    </div>
+
+    <div id="panel-admin" class="panel">
+        <h2 style="color: #dc3545;">Panel de Control y Soporte</h2>
+        
+        <div class="admin-box">
+            <h3>Configuración de Partida</h3>
+            <input type="number" id="admin-premio" placeholder="Premio Principal (Bs)">
+            <input type="number" id="admin-prorroga" placeholder="Premio Prórroga (Bs)">
+            <label><input type="checkbox" id="admin-check-prorroga"> Habilitar Prórroga</label>
+            <button onclick="actualizarConfigJuego()">Guardar</button>
+        </div>
+
+        <div class="admin-box">
+            <h3>Pagos Pendientes</h3>
+            <div id="lista-pagos"></div>
+        </div>
+
+        <div class="admin-box" id="canto-bingo-alerta" style="display:none; background: #fff3cd;">
+            <h3>¡ALERTA DE BINGO!</h3>
+            <p id="datos-posible-ganador"></p>
+            <button onclick="aprobarBingo()" style="background: green; color:white;">Aprobar Bingo</button>
+            <button onclick="rechazarBingo()" style="background: red; color:white;">Rechazar (Falso)</button>
+        </div>
+
+        <div class="admin-box" id="datos-ganador-confirmado" style="display:none; border-color: green;">
+            <h3>Datos para Pagar al Ganador</h3>
+            <div id="info-pago-ganador"></div>
+        </div>
+
+        <div class="admin-box" id="panel-master" style="display:none;">
+            <h3>Panel Máster (Solo 27146006)</h3>
+            <input type="text" id="nuevo-codigo" placeholder="Nuevo código de soporte">
+            <button onclick="crearCodigo()">Crear / Habilitar</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
