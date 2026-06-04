@@ -4,18 +4,192 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Caribe Play</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
-        .panel { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
-        .active { display: block; }
-        .grid-75 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-top: 10px; }
-        .num-box { padding: 10px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
-        .tachado { background-color: #ff4d4d; color: white; text-decoration: line-through; }
-        .cilindro { display: flex; gap: 10px; margin-bottom: 20px; background: #333; padding: 10px; border-radius: 50px; color: white;}
-        .bola { width: 40px; height: 40px; background: #ffd700; border-radius: 50%; color: black; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        #codigo-soporte-trigger { position: fixed; bottom: 0; right: 0; width: 30px; height: 30px; opacity: 0; cursor: pointer; }
-        .admin-box { border: 2px solid #0056b3; padding: 15px; margin-top: 20px; border-radius: 8px; }
+        /* Variables de color e identidad visual */
+        :root {
+            --primary: #007bff;
+            --primary-hover: #0056b3;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --border: #cccccc;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 15px; 
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+        }
+
+        .panel { 
+            display: none; 
+            background: var(--card-bg); 
+            padding: 25px 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08); 
+            width: 100%;
+            max-width: 450px; /* Tama√±o ideal para tel√©fonos m√≥viles */
+            box-sizing: border-box;
+        }
+
+        .active { 
+            display: block; 
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        h3 {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 8px;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+
+        h4 {
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Campos de texto y formularios */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            background-color: #fafafa;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            background-color: #fff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+        /* Botones interactivos */
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #e0e0e0;
+            margin: 30px 0;
+        }
+
+        #login-section, #register-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Tablero de 75 bolas y Cilindro */
+        .grid-75 { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 6px; 
+            margin-top: 15px; 
+        }
+        
+        .num-box { 
+            padding: 10px 0; 
+            text-align: center; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            background: #fff; 
+        }
+        
+        .tachado { 
+            background-color: #dc3545; 
+            color: white; 
+            border-color: #dc3545; 
+            text-decoration: line-through;
+        }
+        
+        .cilindro { 
+            display: flex; 
+            justify-content: space-between; 
+            gap: 8px; 
+            margin-bottom: 20px; 
+            background: #222; 
+            padding: 12px; 
+            border-radius: 12px; 
+        }
+        
+        .bola { 
+            width: 45px; 
+            height: 45px; 
+            background: #ffc107; 
+            border-radius: 50%; 
+            color: #000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            font-size: 16px; 
+            box-shadow: inset -3px -3px 8px rgba(0,0,0,0.4); 
+        }
+
+        #codigo-soporte-trigger { 
+            position: fixed; 
+            bottom: 0; 
+            right: 0; 
+            width: 30px; 
+            height: 30px; 
+            opacity: 0; 
+            cursor: pointer; 
+        }
+        
+        .admin-box { 
+            border: 2px solid #0056b3; 
+            padding: 15px; 
+            margin-top: 20px; 
+            border-radius: 8px; 
+        }
     </style>
 </head>
 <body>
@@ -23,12 +197,12 @@
     <div id="codigo-soporte-trigger" onclick="pedirCodigoAdmin()"></div>
 
     <div id="panel-auth" class="panel active">
-        <h2>Bienvenido a Bingo Caribe Play</h2>
+        <h2>Bingo Caribe Play</h2>
         
         <div id="login-section">
-            <h3>Iniciar SesiÛn</h3>
-            <input type="email" id="log-email" placeholder="Correo">
-            <input type="password" id="log-pass" placeholder="ContraseÒa">
+            <h3>Iniciar Sesi√≥n</h3>
+            <input type="email" id="log-email" placeholder="Correo electr√≥nico">
+            <input type="password" id="log-pass" placeholder="Contrase√±a">
             <button onclick="iniciarSesion()">Entrar</button>
         </div>
 
@@ -39,103 +213,120 @@
             <input type="text" id="reg-nombre" placeholder="Nombre">
             <input type="text" id="reg-apellido" placeholder="Apellido">
             <input type="number" id="reg-edad" placeholder="Edad">
-            <input type="text" id="reg-tel" placeholder="TelÈfono">
-            <input type="text" id="reg-cedula" placeholder="CÈdula">
+            <input type="text" id="reg-tel" placeholder="N√∫mero de Tel√©fono">
+            <input type="text" id="reg-cedula" placeholder="N√∫mero de C√©dula">
             <input type="text" id="reg-nac" placeholder="Nacionalidad">
             
-            <h4>Datos para recibir premios (PagoMÛvil)</h4>
-            <input type="text" id="reg-pm-cedula" placeholder="CÈdula PagoMÛvil">
-            <input type="text" id="reg-pm-tel" placeholder="TelÈfono PagoMÛvil">
-            <input type="text" id="reg-pm-banco" placeholder="Banco (Ej: Mercantil 0105)">
+            <h3>Datos de PagoM√≥vil Personal</h3>
+            <h4>(Donde se enviar√° el premio si ganas)</h4>
+            <input type="text" id="reg-pm-cedula" placeholder="C√©dula del PagoM√≥vil">
+            <input type="text" id="reg-pm-tel" placeholder="Tel√©fono del PagoM√≥vil">
+            <input type="text" id="reg-pm-banco" placeholder="C√≥digo y Nombre del Banco">
             
-            <h4>Credenciales</h4>
-            <input type="email" id="reg-email" placeholder="Correo electrÛnico">
-            <input type="password" id="reg-pass" placeholder="ContraseÒa">
+            <h3>Credenciales de Acceso</h3>
+            <input type="email" id="reg-email" placeholder="Correo electr√≥nico">
+            <input type="password" id="reg-pass" placeholder="Contrase√±a">
             <button onclick="registrarUsuario()">Registrarse</button>
         </div>
     </div>
 
     <div id="panel-dashboard" class="panel">
-        <h2>Sala de Bingo</h2>
-        <div id="premios-info" style="background: #e6f7ff; padding: 10px; border-radius: 5px;">
-            <h3>Premio Principal: <span id="premio-main">0</span> Bs</h3>
-            <h4 id="premio-prorroga-container" style="display:none;">Premio PrÛrroga: <span id="premio-prorroga">0</span> Bs</h4>
+        <h2>Sala de Espera</h2>
+        
+        <div id="premios-info" style="background: #e6f7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 16px;"><strong>Premio Principal:</strong> <span id="premio-main">0</span> Bs</p>
+            <p id="premio-prorroga-container" style="display:none; margin: 5px 0 0 0; color: #52c41a;"><strong>Premio Pr√≥rroga:</strong> <span id="premio-prorroga">0</span> Bs</p>
         </div>
 
-        <div class="compra-cartones">
+        <div class="compra-cartones" style="border: 1px solid #e8e8e8; padding: 15px; border-radius: 8px; background: #fafafa;">
             <h3>Adquirir Cartones</h3>
-            <p><strong>Datos de Pago (PagoMÛvil):</strong> CÈdula: 27.146.006 | TelÈfono: 04128481584 | Banco Mercantil 0105</p>
-            <p>Valor por cartÛn: 150 Bs.</p>
-            <label>Cantidad (1-4):</label>
+            <p style="font-size: 14px; line-height: 1.5;"><strong>Datos para realizar PagoM√≥vil:</strong><br>
+            C√©dula: 27.146.006<br>
+            Tel√©fono: 04128481584<br>
+            Banco Mercantil (0105)</p>
+            <p><strong>Valor por cart√≥n:</strong> 150 Bs.</p>
+            
+            <label for="cantidad-cartones" style="font-weight: bold; display: block; margin-bottom: 8px;">Cantidad de cartones:</label>
             <select id="cantidad-cartones">
-                <option value="1">1 CartÛn</option>
+                <option value="1">1 Cart√≥n</option>
                 <option value="2">2 Cartones</option>
                 <option value="3">3 Cartones</option>
                 <option value="4">4 Cartones</option>
             </select>
-            <button onclick="reportarPago()">Reportar Pago</button>
-            <p id="estado-compra"></p>
+            <button onclick="reportarPago()" style="background-color: #28a745;">Reportar Pago</button>
+            <p id="estado-compra" style="text-align: center; color: #8c8c8c; font-size: 14px; font-style: italic;"></p>
         </div>
 
-        <div id="mis-cartones-container" style="display: none;">
-            <h3>Tus Cartones Aprobados</h3>
+        <div id="mis-cartones-container" style="display: none; margin-top: 20px;">
+            <h3>Tus Cartones Asignados</h3>
             <div id="mis-cartones"></div>
         </div>
 
-        <div id="cronometro-container">
-            <h3>El juego inicia en: <span id="cronometro">--:--</span></h3>
+        <div id="cronometro-container" style="text-align: center; margin-top: 25px; padding: 10px; background: #fff2e8; border-radius: 8px;">
+            <h4 style="margin: 0 0 5px 0; color: #fa541c;">Tiempo restante para iniciar:</h4>
+            <span id="cronometro" style="font-size: 28px; font-weight: bold; color: #d4380d;">--:--</span>
         </div>
         
-        <button id="btn-entrar-juego" style="display:none;" onclick="mostrarPanel('panel-juego')">Entrar al Juego</button>
+        <button id="btn-entrar-juego" style="display:none; margin-top: 20px;" onclick="mostrarPanel('panel-juego')">Entrar a la partida</button>
     </div>
 
     <div id="panel-juego" class="panel">
-        <h2>Jugando Bingo</h2>
+        <h2>¬°Partida en Vivo!</h2>
         
+        <h4>√öltimas 6 bolas sorteadas:</h4>
         <div class="cilindro" id="ultimas-bolas">
-            </div>
+            <div class="bola">-</div>
+            <div class="bola">-</div>
+            <div class="bola">-</div>
+            <div class="bola">-</div>
+            <div class="bola">-</div>
+            <div class="bola">-</div>
+        </div>
 
+        <h4>Panel de Control de N√∫meros (1-75):</h4>
         <div class="grid-75" id="tablero-75">
             </div>
 
-        <button id="btn-bingo" onclick="cantarBingo()" style="background: #28a745; color: white; padding: 15px 30px; font-size: 20px; border-radius: 8px; margin-top: 20px; width: 100%;">°BINGO!</button>
+        <button id="btn-bingo" onclick="cantarBingo()" style="background: #28a745; color: white; padding: 16px; font-size: 22px; border-radius: 12px; margin-top: 25px; width: 100%; box-shadow: 0 4px 12px rgba(40,167,69,0.3);">¬°CANTAR BINGO!</button>
     </div>
 
     <div id="panel-admin" class="panel">
-        <h2 style="color: #dc3545;">Panel de Control y Soporte</h2>
+        <h2 style="color: #dc3545;">Panel de Soporte T√©cnico</h2>
         
         <div class="admin-box">
-            <h3>ConfiguraciÛn de Partida</h3>
+            <h3>Configuraci√≥n de Premios</h3>
             <input type="number" id="admin-premio" placeholder="Premio Principal (Bs)">
-            <input type="number" id="admin-prorroga" placeholder="Premio PrÛrroga (Bs)">
-            <label><input type="checkbox" id="admin-check-prorroga"> Habilitar PrÛrroga</label>
-            <button onclick="actualizarConfigJuego()">Guardar</button>
+            <input type="number" id="admin-prorroga" placeholder="Premio Pr√≥rroga (Bs)">
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; margin-top: 5px;">
+                <input type="checkbox" id="admin-check-prorroga" style="width: auto; margin: 0;"> Habilitar Pr√≥rroga (2do Ganador)
+            </label>
+            <button onclick="actualizarConfigJuego()" style="margin-top: 15px;">Guardar Configuraci√≥n</button>
         </div>
 
         <div class="admin-box">
-            <h3>Pagos Pendientes</h3>
+            <h3>Control de Pagos Pendientes</h3>
             <div id="lista-pagos"></div>
         </div>
 
-        <div class="admin-box" id="canto-bingo-alerta" style="display:none; background: #fff3cd;">
-            <h3>°ALERTA DE BINGO!</h3>
+        <div class="admin-box" id="canto-bingo-alerta" style="display:none; background: #fff3cd; border-color: #ffc107;">
+            <h3 style="color: #856404; border-color: #ffeeba;">‚ö†Ô∏è Alerta de Reclamo de Bingo</h3>
             <p id="datos-posible-ganador"></p>
-            <button onclick="aprobarBingo()" style="background: green; color:white;">Aprobar Bingo</button>
-            <button onclick="rechazarBingo()" style="background: red; color:white;">Rechazar (Falso)</button>
+            <button onclick="aprobarBingo()" style="background: #28a745;">‚úì Aprobar Ganador</button>
+            <button onclick="rechazarBingo()" style="background: #dc3545;">‚úó Rechazar (Bingo Falso)</button>
         </div>
 
-        <div class="admin-box" id="datos-ganador-confirmado" style="display:none; border-color: green;">
-            <h3>Datos para Pagar al Ganador</h3>
+        <div class="admin-box" id="datos-ganador-confirmado" style="display:none; border-color: #28a745; background: #f6ffed;">
+            <h3 style="color: #237804; border-color: #b7eb8f;">PagoM√≥vil del Ganador</h3>
             <div id="info-pago-ganador"></div>
         </div>
 
-        <div class="admin-box" id="panel-master" style="display:none;">
-            <h3>Panel M·ster (Solo 27146006)</h3>
-            <input type="text" id="nuevo-codigo" placeholder="Nuevo cÛdigo de soporte">
-            <button onclick="crearCodigo()">Crear / Habilitar</button>
+        <div class="admin-box" id="panel-master" style="display:none; border-color: #722ed1;">
+            <h3 style="color: #531dab;">üîë Panel de Control M√°ster</h3>
+            <input type="text" id="nuevo-codigo" placeholder="Escribir nuevo c√≥digo de acceso">
+            <button onclick="crearCodigo()" style="background-color: #722ed1;">Generar C√≥digo de Soporte</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
 </body>
 </html>
+
